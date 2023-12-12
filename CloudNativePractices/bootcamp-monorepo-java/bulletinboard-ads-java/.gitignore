@@ -1,0 +1,25 @@
+# General
+bin
+
+# OS
+.DS_Store
+thumbs.db
+
+# Maven
+target
+
+# Node
+*.log
+npm-debug.log
+node_modules
+
+# IntelliJ
+.idea
+*.iws
+*.iml
+*.ipr
+
+# Eclipse
+.classpath
+.project
+.settings

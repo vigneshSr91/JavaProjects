@@ -1,0 +1,79 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bulletinboard-ads
+spec:
+  selector:
+    matchLabels:
+      app: bulletinboard-ads
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: bulletinboard-ads
+    spec:
+      imagePullSecrets:
+        - name: docker-registry
+      containers:
+        - name: app
+          image: cc-ms-k8s-training.common.repositories.cloud.sap/bulletinboard-ads-<your D/C/I number>
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          env:
+            - name: PORT
+              value: "8080"
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:postgresql://bulletinboard-ads-db:5432/ads
+            - name: SPRING_DATASOURCE_USERNAME
+              value: slonik
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: topsekret
+            - name: REVIEWS_HOST
+              value: https://rws.ingress.<CLUSTER>.<PROJECT>.shoot.canary.k8s-hana.ondemand.com/
+            - name: REVIEWS_HOST_INTERNAL
+              value: http://bulletinboard-reviews:9090
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bulletinboard-ads
+spec:
+  selector:
+    app: bulletinboard-ads
+  ports:
+    - name: app
+      port: 8080
+      targetPort: 8080
+  type: ClusterIP
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    cert.gardener.cloud/purpose: managed
+  name: bulletinboard-ads
+spec:
+  rules:
+    - host: ads.ingress.<CLUSTER>.<PROJECT>.shoot.canary.k8s-hana.ondemand.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: bulletinboard-ads
+                port:
+                  number: 8080
+  tls:
+    - hosts:
+        - ads.ingress.<CLUSTER>.<PROJECT>.shoot.canary.k8s-hana.ondemand.com
+      secretName: ads-cert
+---
+apiVersion: cert.gardener.cloud/v1alpha1
+kind: Certificate
+metadata:
+  name: ads-cert
+  namespace: default
+spec:
+  commonName: ads.ingress.<CLUSTER>.<PROJECT>.shoot.canary.k8s-hana.ondemand.com

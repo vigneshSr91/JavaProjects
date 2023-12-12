@@ -1,0 +1,15 @@
+---
+applications:
+- name: bulletinboard-reviews
+  memory: 800MB
+  path: target/bulletinboard-reviews.jar
+  routes:
+    - route: 'bulletinboard-reviews-[YOUR-I/D-Number].[DOMAIN]'
+  buildpacks:
+    - https://github.com/cloudfoundry/java-buildpack.git
+  env:
+      JBP_CONFIG_OPEN_JDK_JRE: '{ memory_calculator: { stack_threads: 200 },jre: { version: 11.+ } }'
+      JBP_CONFIG_SPRING_AUTO_RECONFIGURATION: '{enabled: false}'
+      MALLOC_ARENA_MAX: 4
+  services:
+    - postgres-bulletinboard-reviews

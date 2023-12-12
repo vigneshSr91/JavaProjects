@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bulletinboard-ads
+spec:
+  selector:
+    matchLabels:
+      app: bulletinboard-ads
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: bulletinboard-ads
+    spec:
+      containers:
+        - name: app
+          image: cc-ms-k8s-training.common.repositories.cloud.sap/bulletinboard-ads-i344646:v1
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:postgresql://bulletinboard-ads-db/postgres
+            - name: SPRING_DATASOURCE_USERNAME
+              value: postgres
+      imagePullSecrets:
+        - name: regcred
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bulletinboard-ads
+spec:
+  selector:
+    app: bulletinboard-ads
+  ports:
+    - name: bulletinboard-ads
+      port: 8080
+      targetPort: 8080
+  type: ClusterIP
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    cert.gardener.cloud/purpose: managed
+    nginx.ingress.kubernetes.io/proxy-body-size: 150m
+  name: bulletinboard-ads
+spec:
+  rules:
+    - host: ads.ingress.fun.i344646.shoot.canary.k8s-hana.ondemand.com
+      http:
+        paths:
+          - backend:
+              service:
+                name: bulletinboard-ads
+                port:
+                  number: 8080
+            path: /
+            pathType: Prefix
+  tls:
+    - hosts:
+        - ads.ingress.fun.i344646.shoot.canary.k8s-hana.ondemand.com
+      secretName: app-certs
